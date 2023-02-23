@@ -41,7 +41,7 @@ To overcome this, we should expose just the nearest point through this method.
 
 ### **How would your representation handle converting one of the path curved segments to a straight line? Which members would you expose to do that?**
 
-The most direct way and probably the one I would choose is transforming the curve into a linear one by removing all the intermediate control points. In case we must keep the nature of the curve, I'd distribute evenly the remaining points along the segment between the first and last control points (in the middle if the curve is quadratic or in the quarters if the curve is cubic).
+The most direct way and probably the one I would choose is to transfomr the curve into a linear one by removing all the intermediate control points. In case we must keep the nature of the curve, I'd distribute evenly the remaining points along the segment between the first and last control points (in the middle if the curve is quadratic or in the quarters if the curve is cubic).
 
 Besides the asked method, I'd create a new method in BezierCurve2 (straight) aimed at this procedure.
 
