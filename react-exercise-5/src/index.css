@@ -1,0 +1,81 @@
+.image-container {
+  position: relative;
+}
+
+.img-container > .context-menu {
+  position: absolute;
+  top: 5px;
+  right: 10px;
+  opacity: 0;
+}
+
+.img-container:hover .context-menu {
+  opacity: 1;
+  cursor: pointer;
+}
+
+.card:hover {
+  border: 2px solid #18cbca;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-gap: 25px;
+}
+
+.grid > div {
+  font-size: 20px;
+  padding: .5em;
+  color: #000000;
+  text-align: left;
+}
+
+.modal-header {
+  border-bottom: 0 none;
+}
+
+.modal-footer {
+  border-top: 0 none;
+  color: var(--bs-red)
+}
+
+.modal-dialog{
+  overflow-y: initial !important
+}
+
+.modal-body {
+  height: 200px;
+  overflow-y: auto;
+}
+
+.btn-primary {
+  background-color: #ffffff;
+  border-color: #18cbca;
+  color: #18cbca;
+}
+
+.btn-secondary {
+  background-color: #ffffff;
+  border-color: #555555;
+  color: #555555;
+}
+
+.custom-checkbox {
+  color: white;
+  accent-color: white;
+}
+
+.list-group-item.active {
+  background-color: #18cbca;
+}
+
+.list-group-item:first-child {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.list-group-item:last-child {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
