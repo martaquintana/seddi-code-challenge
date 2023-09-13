@@ -21,6 +21,10 @@ let controlPoints: Point2Draw[] = []
 const bezierPath: BezierPath2 = new BezierPath2
 let bezierPathDraw: BezierPath2Draw = new BezierPath2Draw(bezierPath)
 
+let bezierPathDraws: BezierPath2Draw[] = [];
+
+let HIGHLIGHTED_PATH: number = 0 //
+
 /** State constants */
 enum STATE {
     ADD,
@@ -28,6 +32,7 @@ enum STATE {
 }
 let HIGHLIGHTED: number = 0
 let CURRENT_ACTION: STATE = STATE.ADD
+let creatingNewPath = false;
 
 /** Auxiliary functions */
 function gameLoop() {
@@ -41,14 +46,21 @@ function gameLoop() {
         point.draw(context)
     })
 
-    bezierPathDraw.draw(context, HIGHLIGHTED)
+    bezierPathDraws.forEach((path: BezierPath2Draw, pathIndex: number) => {
+        if (pathIndex === HIGHLIGHTED_PATH) {
+            path.draw(context, HIGHLIGHTED);
+        } else {
+            path.draw(context, -1);
+        }
+    });
+
 }
 
 function controlPointClicked(x: number, y: number): Point2 | null {
-    if (bezierPathDraw.bezierPath.length === 0) {
+    if (bezierPathDraws[HIGHLIGHTED_PATH].bezierPath.length === 0) {
         return null
     }
-    const bezierCurve = bezierPathDraw.bezierPath.getSegment(HIGHLIGHTED)
+    const bezierCurve = bezierPathDraws[HIGHLIGHTED_PATH].bezierPath.getSegment(HIGHLIGHTED)
     return bezierCurve.getControlPoint(x, y)
 }
 
@@ -81,15 +93,15 @@ function eventListeners() {
         // Early skip
         if (CURRENT_ACTION === STATE.EDIT){
             CURRENT_ACTION = STATE.ADD
-    
-            const bezierCurve = bezierPath.getSegment(HIGHLIGHTED).controlPoints
+            const bezierCurve = bezierPathDraws[HIGHLIGHTED_PATH].bezierPath.getSegment(HIGHLIGHTED).controlPoints
             bezierCurve.forEach(p => {
                 console.log(p)
             })
     
             return
         }
-        
+        console.log(HIGHLIGHTED_PATH);
+        console.log(HIGHLIGHTED);
         // Add always the new control point
         const {x, y, button} = ev
         const p = new Point2(x, y)
@@ -102,8 +114,17 @@ function eventListeners() {
     
             try {
                 const bezierCurve = new BezierCurve2(points)
-                bezierPath.addCurve(bezierCurve)
-                bezierPathDraw = new BezierPath2Draw(bezierPath)
+                if (creatingNewPath || bezierPathDraws.length === 0) {
+                    const newBezierPath = new BezierPath2(); // Crear un nuevo BezierPath2
+                    newBezierPath.addCurve(bezierCurve);
+                    bezierPathDraws.push(new BezierPath2Draw(newBezierPath));
+                    creatingNewPath = false; // Restablecer creatingNewPath
+                } else {
+                    // Agregar la curva al último BezierPath2
+                    bezierPathDraws[bezierPathDraws.length - 1].bezierPath.addCurve(bezierCurve);
+                }
+                console.log(bezierPathDraws)
+
                 controlPoints = controlPoints.slice(-1)
             } catch (e) {
                 if (e instanceof Error) {
@@ -116,22 +137,37 @@ function eventListeners() {
     }
     
     window.onkeyup = (ev: KeyboardEvent) => {
+        if (ev.key === "+") { // Presionar la tecla "2" para activar la creación de un nuevo Bezier Path
+            creatingNewPath = true;
+            controlPoints = []; // Limpiar la lista de puntos de control
+            console.log("Creando un nuevo Bezier Path");
+        }
         switch (ev.key) {
             case "ArrowLeft":
-                HIGHLIGHTED -= 1
-                break
+                HIGHLIGHTED -= 1;
+                break;
             case "ArrowRight":
-                HIGHLIGHTED += 1
-                break
+                HIGHLIGHTED += 1;
+                break;
+            case "ArrowUp":
+                HIGHLIGHTED_PATH -= 1;
+                HIGHLIGHTED = 0; // Restablecer la curva seleccionada al cambiar de camino
+                break;
+            case "ArrowDown":
+                HIGHLIGHTED_PATH += 1;
+                HIGHLIGHTED = 0; // Restablecer la curva seleccionada al cambiar de camino
+                break;
             case " ":
-                bezierPathDraw.bezierPath.getSegment(HIGHLIGHTED).straight()
-                break
+                bezierPathDraws[HIGHLIGHTED_PATH].bezierPath.getSegment(HIGHLIGHTED).straight();
+                break;
         }
     
-        const nCurves = bezierPath.length
-        HIGHLIGHTED = (HIGHLIGHTED % nCurves + nCurves) % nCurves
+        const nPaths = bezierPathDraws.length;
+        HIGHLIGHTED_PATH = (HIGHLIGHTED_PATH % nPaths + nPaths) % nPaths;
     
-        ev.preventDefault()
+        const nCurves = bezierPathDraws[HIGHLIGHTED_PATH].bezierPath.length;
+        HIGHLIGHTED = (HIGHLIGHTED % nCurves + nCurves) % nCurves;
+        ev.preventDefault();
     }
 }
 
