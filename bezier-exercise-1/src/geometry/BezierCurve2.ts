@@ -45,6 +45,21 @@ export class BezierCurve2 {
         return this._controlPoints.length - 1
     }
 
+    public length(numSegments: number = 100): number {
+        let length = 0;
+        let lastPoint = this.eval(0);
+    
+        for (let i = 1; i <= numSegments; i++) {
+            const t = i / numSegments;
+            const point = this.eval(t);
+            length += lastPoint.distance(point);
+            lastPoint = point;
+        }
+    
+        return length;
+    }
+    
+
     /**
      * Method that converts any Bezier curve into a linear one
     */

@@ -57,7 +57,7 @@ function gameLoop() {
 }
 
 function controlPointClicked(x: number, y: number): Point2 | null {
-    if (bezierPathDraws[HIGHLIGHTED_PATH].bezierPath.length === 0) {
+    if (bezierPathDraws[HIGHLIGHTED_PATH] == undefined || bezierPathDraws[HIGHLIGHTED_PATH].bezierPath.length === 0) {
         return null
     }
     const bezierCurve = bezierPathDraws[HIGHLIGHTED_PATH].bezierPath.getSegment(HIGHLIGHTED)
@@ -134,6 +134,7 @@ function eventListeners() {
                 }
             }
         }
+
     }
     
     window.onkeyup = (ev: KeyboardEvent) => {
@@ -157,6 +158,13 @@ function eventListeners() {
                 HIGHLIGHTED_PATH += 1;
                 HIGHLIGHTED = 0; // Restablecer la curva seleccionada al cambiar de camino
                 break;
+            case "l":
+                const lengthSelectedCurve = bezierPathDraws[HIGHLIGHTED_PATH].bezierPath.getSegment(HIGHLIGHTED).length();
+                const lengthDisplay = document.getElementById("lengthDisplay");
+                if (lengthDisplay !== null) {
+                    lengthDisplay.textContent = `Longitud estimada de la curva: ${lengthSelectedCurve}`;
+                }
+                break;
             case " ":
                 bezierPathDraws[HIGHLIGHTED_PATH].bezierPath.getSegment(HIGHLIGHTED).straight();
                 break;
@@ -171,6 +179,7 @@ function eventListeners() {
     }
 }
 
+
 window.onload = () => {
     let container = document.createElement('div')
     container.id = "container"
@@ -184,6 +193,10 @@ window.onload = () => {
     context = canvas.getContext("2d") as CanvasRenderingContext2D
     document.addEventListener('contextmenu', ev => ev.preventDefault())
 
+    const lengthDisplay = document.createElement('p');
+    lengthDisplay.id="lengthDisplay"
+    lengthDisplay.textContent = `Longitud estimada de la curva: `;
+    document.body.appendChild(lengthDisplay);
     if (context === null) {
         throw Error("Context badly constructed!")
     }
