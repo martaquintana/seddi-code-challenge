@@ -24,7 +24,8 @@ let bezierPathDraw: BezierPath2Draw = new BezierPath2Draw(bezierPath)
 let bezierPathDraws: BezierPath2Draw[] = [];
 
 let HIGHLIGHTED_PATH: number = 0 //
-
+let linked=false;
+let linkedControlPoints: String[]=[];
 /** State constants */
 enum STATE {
     ADD,
@@ -64,6 +65,33 @@ function controlPointClicked(x: number, y: number): Point2 | null {
     return bezierCurve.getControlPoint(x, y)
 }
 
+function checkPointClicked(x: number, y: number) {
+    // Radio de tolerancia para considerar que se ha hecho clic en un punto de control
+    const tolerance = 5; // Ajusta este valor según tus necesidades
+
+    // Itera a través de los caminos
+    for (let i = 0; i < bezierPathDraws.length; i++) {        
+        // Itera a través de los puntos de control en cada camino
+        for (let j = 0; j < bezierPathDraws[i].bezierPath.length; j++) {
+            for (let k = 0; k < bezierPathDraws[i].bezierPath.getSegment(j).controlPoints.length; k++) {        
+
+                const controlPoint = bezierPathDraws[i].bezierPath.getSegment(j).controlPoints[k];
+                
+                // Calcula la distancia entre la posición del ratón y el punto de control
+                const distance = Math.sqrt((x - controlPoint.position.x) ** 2 + (y - controlPoint.position.y) ** 2);
+                
+                // Si la distancia está dentro del radio de tolerancia, se considera que se ha hecho clic en el punto de control
+                if (distance <= tolerance) {
+                    return { pathIndex: i, curveIndex: j, controlPointIndex:k };
+                }
+            }
+        }
+    }
+
+    // Si no se ha encontrado ningún punto de control cercano, devuelve null
+    return null;
+}
+
 function eventListeners() {
 
     canvas.onmousedown = (ev: MouseEvent) => {
@@ -83,10 +111,43 @@ function eventListeners() {
         if (controlPointToEdit === null) return 
         const {x, y} = ev
         if (CURRENT_ACTION === STATE.EDIT) {
-            controlPointToEdit.position.x = x
-            controlPointToEdit.position.y = y
-        }
+            const dx = x - controlPointToEdit.position.x; // Calcula la diferencia en x
+            const dy = y - controlPointToEdit.position.y; // Calcula la diferencia en y
     
+            controlPointToEdit.position.x = x; // Actualiza el punto de control principal
+            controlPointToEdit.position.y = y;
+        
+            let controlPointEdited= checkPointClicked(x, y)
+
+            if(linked && controlPointEdited ){
+
+                    // Itera a través de las asociaciones y actualiza los puntos de control vinculados
+                for (const association of linkedControlPoints) {
+                    const [source, target] = association.split(":");
+                    const sourcePathIndex = parseInt(source[0]);
+                    const sourceCurveIndex = parseInt(source[1]);
+                    const sourceControlPointIndex = parseInt(source[2]);
+                    const targetPathIndex = parseInt(target[0]);
+                    const targetCurveIndex = parseInt(target[1]);
+                    const targetControlPointIndex = parseInt(target[2]);
+
+                    // Si el punto de control principal pertenece a la asociación, actualiza el punto de control vinculado
+                    if (
+                        sourcePathIndex === controlPointEdited.pathIndex &&
+                        sourceCurveIndex === controlPointEdited.curveIndex &&
+                        sourceControlPointIndex === controlPointEdited.controlPointIndex
+                    ) {
+                        const linkedBezierPath = bezierPathDraws[targetPathIndex].bezierPath.getSegment(targetCurveIndex);
+                        const linkedControlPoint = linkedBezierPath.controlPoints[targetControlPointIndex];
+
+                        // Actualiza la posición del punto de control vinculado
+                        linkedControlPoint.position.x += dx;
+                        linkedControlPoint.position.y += dy;
+                    }
+                }
+            }
+        }
+
     }
     
     canvas.onmouseup = (ev: MouseEvent) => {
@@ -165,6 +226,17 @@ function eventListeners() {
                     lengthDisplay.textContent = `Longitud estimada de la curva: ${lengthSelectedCurve}`;
                 }
                 break;
+            case "2":
+                console.log("Vincular puntos de control")
+                // Arreglo para mantener los puntos de control vinculados
+
+                linkedControlPoints = [
+                    "000:100", // Asociación entre Path 0, Curve 0, Punto de control 0 y Path 1, Curve 0, Punto de control 0
+                    "001:101", // Asociación entre Path 0, Curve 0, Punto de control 1 y Path 1, Curve 0, Punto de control 1
+                    "002:102", // Asociación entre Path 0, Curve 0, Punto de control 2 y Path 1, Curve 0, Punto de control 2
+                ];
+                linked=true;
+             break
             case " ":
                 bezierPathDraws[HIGHLIGHTED_PATH].bezierPath.getSegment(HIGHLIGHTED).straight();
                 break;
